@@ -1,0 +1,96 @@
+/* ── FACEIT ELO Side Panels ── */
+
+.felo-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  flex-shrink: 0;
+  width: 122px;
+  box-sizing: border-box;
+}
+
+.felo-left  { align-items: flex-end;   padding-right: 6px; }
+.felo-right { align-items: flex-start; padding-left:  6px; }
+
+.felo-p-inner {
+  background:    #13131f;
+  border:        1px solid rgba(255,101,0,.3);
+  border-radius: 10px;
+  padding:       12px 10px;
+  display:       flex;
+  flex-direction: column;
+  align-items:   center;
+  gap:           4px;
+  box-shadow:    0 4px 20px rgba(0,0,0,.5), 0 0 0 1px rgba(255,101,0,.07);
+  animation:     feloFadeIn .3s ease;
+  width:         100%;
+  box-sizing:    border-box;
+}
+
+@keyframes feloFadeIn {
+  from { opacity: 0; transform: scale(.95); }
+  to   { opacity: 1; transform: scale(1);   }
+}
+
+.felo-p-label {
+  font-size:      9px;
+  font-weight:    700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color:          #ff6500;
+  font-family:    'Rajdhani','Barlow','Segoe UI',sans-serif;
+}
+
+.felo-p-avg {
+  font-size:   34px;
+  font-weight: 900;
+  line-height: 1;
+  font-family: 'Rajdhani','Barlow','Segoe UI',sans-serif;
+  text-shadow: 0 0 12px currentColor;
+}
+
+.felo-p-lvl {
+  font-size:      11px;
+  font-weight:    700;
+  letter-spacing: .06em;
+  font-family:    'Rajdhani','Barlow','Segoe UI',sans-serif;
+  opacity: .85;
+}
+
+.felo-p-divider {
+  width:      100%;
+  height:     1px;
+  background: rgba(255,255,255,.07);
+  margin:     4px 0;
+}
+
+.felo-p-list {
+  display:        flex;
+  flex-direction: column;
+  gap:            3px;
+  width:          100%;
+}
+
+.felo-p-row {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  gap:             4px;
+}
+
+.felo-p-nick {
+  font-size:     10px;
+  color:         #888;
+  overflow:      hidden;
+  text-overflow: ellipsis;
+  white-space:   nowrap;
+  max-width:     60px;
+  font-family:   'Rajdhani','Barlow','Segoe UI',sans-serif;
+}
+
+.felo-p-elo {
+  font-size:   11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  font-family: 'Rajdhani','Barlow','Segoe UI',sans-serif;
+}

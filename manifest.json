@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "FACEIT Team ELO",
+  "version": "1.0.0",
+  "description": "Показывает средний ELO каждой команды в комнате матча FACEIT",
+  "permissions": [],
+  "host_permissions": [
+    "https://www.faceit.com/*",
+    "https://api.faceit.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://www.faceit.com/*/room/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

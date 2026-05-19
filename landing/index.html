@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FACEIT ELO — расширение для браузера</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --orange:  #ff6500;
+    --orange2: #d94f00;
+    --bg:      #0d0d18;
+    --card:    #13131f;
+    --card2:   #1a1a2e;
+    --border:  rgba(255,101,0,.2);
+    --text:    #e0e0e0;
+    --muted:   #666;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 24px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 50% 0%, rgba(255,101,0,.12) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 60% at 80% 60%, rgba(255,101,0,.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,101,0,.12);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--orange);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  .hero h1 {
+    font-size: clamp(36px, 7vw, 72px);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -.02em;
+    margin-bottom: 16px;
+  }
+
+  .hero h1 span { color: var(--orange); }
+
+  .hero p {
+    font-size: clamp(15px, 2vw, 18px);
+    color: #999;
+    max-width: 540px;
+    line-height: 1.6;
+    margin-bottom: 44px;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 28px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    transition: transform .15s, box-shadow .15s, opacity .15s;
+  }
+  .btn:hover { transform: translateY(-2px); opacity: .92; }
+  .btn:active { transform: translateY(0); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--orange) 0%, var(--orange2) 100%);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(255,101,0,.35);
+  }
+
+  .btn-secondary {
+    background: var(--card2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  /* ── PREVIEW CARD ── */
+  .preview {
+    margin-top: 64px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .preview-team {
+    background: var(--card2);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 10px;
+    padding: 10px 14px;
+    width: 160px;
+  }
+
+  .pt-name { font-size: 10px; color: #666; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+  .pt-elo  { font-size: 32px; font-weight: 900; }
+  .pt-lvl  { font-size: 11px; font-weight: 600; color: #666; margin-top: 2px; }
+
+  .pt-players { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; }
+  .pt-row { display: flex; justify-content: space-between; font-size: 11px; }
+  .pt-nick { color: #777; }
+  .pt-pelo { font-weight: 700; }
+
+  .preview-badge {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    width: 124px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    align-self: center;
+  }
+
+  .pb-label { font-size: 9px; color: var(--orange); font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
+  .pb-avg   { font-size: 36px; font-weight: 900; line-height: 1; }
+  .pb-lvl   { font-size: 11px; font-weight: 700; color: #888; }
+  .pb-divider { width: 100%; height: 1px; background: rgba(255,255,255,.08); }
+  .pb-list  { display: flex; flex-direction: column; gap: 3px; width: 100%; }
+  .pb-row   { display: flex; justify-content: space-between; font-size: 10px; }
+  .pb-nick  { color: #777; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55px; }
+  .pb-pelo  { font-weight: 700; }
+
+  .vs-badge {
+    background: rgba(255,101,0,.08);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 900; color: var(--orange);
+    align-self: center;
+    letter-spacing: .08em;
+  }
+
+  /* ── FEATURES ── */
+  section { padding: 80px 24px; }
+
+  .section-title {
+    text-align: center;
+    font-size: clamp(24px, 4vw, 36px);
+    font-weight: 800;
+    margin-bottom: 12px;
+  }
+  .section-title span { color: var(--orange); }
+  .section-sub {
+    text-align: center;
+    color: #666;
+    margin-bottom: 52px;
+    font-size: 15px;
+  }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .feat {
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 14px;
+    padding: 24px;
+    transition: border-color .2s, transform .2s;
+  }
+  .feat:hover { border-color: var(--border); transform: translateY(-3px); }
+
+  .feat-icon {
+    font-size: 28px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .feat h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+  .feat p  { font-size: 13px; color: #777; line-height: 1.6; }
+
+  /* ── INSTALL ── */
+  .install-section { background: var(--card); }
+
+  .steps {
+    max-width: 640px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .step {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    position: relative;
+    padding-bottom: 32px;
+  }
+
+  .step:last-child { padding-bottom: 0; }
+
+  .step::before {
+    content: '';
+    position: absolute;
+    left: 19px;
+    top: 40px;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, rgba(255,101,0,.3), transparent);
+  }
+  .step:last-child::before { display: none; }
+
+  .step-num {
+    flex-shrink: 0;
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--orange), var(--orange2));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 900;
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(255,101,0,.35);
+  }
+
+  .step-body { padding-top: 8px; }
+  .step-body h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .step-body p  { font-size: 13px; color: #777; line-height: 1.6; }
+
+  code {
+    background: rgba(255,101,0,.1);
+    border: 1px solid rgba(255,101,0,.2);
+    border-radius: 5px;
+    padding: 2px 7px;
+    font-size: 12px;
+    color: var(--orange);
+    font-family: 'Consolas','Courier New',monospace;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 36px 24px;
+    color: var(--muted);
+    font-size: 13px;
+    border-top: 1px solid rgba(255,255,255,.05);
+  }
+
+  footer a { color: var(--orange); text-decoration: none; }
+
+  /* ── DOWNLOAD ANCHOR ── */
+  #download { scroll-margin-top: 40px; }
+</style>
+</head>
+<body>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="badge">⚡ Расширение для Edge / Chrome</div>
+
+  <h1>FACEIT <span>AVG ELO</span></h1>
+  <p>
+    Мгновенно показывает средний ELO каждой команды прямо в комнате матча.
+    Никаких лишних вкладок — всё на месте.
+  </p>
+
+  <div class="btn-group">
+    <a class="btn btn-primary" href="faceit-elo-extension.zip" download id="download">
+      ⬇ Скачать расширение
+    </a>
+    <a class="btn btn-secondary" href="#install">
+      📖 Как установить
+    </a>
+  </div>
+
+  <!-- Live preview -->
+  <div class="preview">
+
+    <!-- Левая панель ELO -->
+    <div class="preview-badge" style="border-color:rgba(255,101,0,.35);">
+      <div class="pb-label">◀ AVG ELO</div>
+      <div class="pb-avg" style="color:#e8c240">1335</div>
+      <div class="pb-lvl" style="color:#c8a825">LVL 6</div>
+      <div class="pb-divider"></div>
+      <div class="pb-list">
+        <div class="pb-row"><span class="pb-nick">Qvinwv</span><span class="pb-pelo" style="color:#ff6500">1710</span></div>
+        <div class="pb-row"><span class="pb-nick">mizeplob</span><span class="pb-pelo" style="color:#87ceeb">1044</span></div>
+        <div class="pb-row"><span class="pb-nick">linaliq</span><span class="pb-pelo" style="color:#e8c240">1295</span></div>
+        <div class="pb-row"><span class="pb-nick">ArT3M04</span><span class="pb-pelo" style="color:#e8c240">1299</span></div>
+        <div class="pb-row"><span class="pb-nick">Spencer33</span><span class="pb-pelo" style="color:#e8c240">1326</span></div>
+      </div>
+    </div>
+
+    <!-- Команда 1 -->
+    <div class="preview-team">
+      <div class="pt-name">team_Qvinwv</div>
+      <div class="pt-players">
+        <div class="pt-row"><span class="pt-nick">Qvinwv</span><span class="pt-pelo" style="color:#ff6500">1710</span></div>
+        <div class="pt-row"><span class="pt-nick">mizeplob</span><span class="pt-pelo" style="color:#87ceeb">1044</span></div>
+        <div class="pt-row"><span class="pt-nick">linaliq</span><span class="pt-pelo" style="color:#e8c240">1295</span></div>
+        <div class="pt-row"><span class="pt-nick">ArT3M04</span><span class="pt-pelo" style="color:#e8c240">1299</span></div>
+        <div class="pt-row"><span class="pt-nick">Spencer33</span><span class="pt-pelo" style="color:#e8c240">1326</span></div>
+      </div>
+    </div>
+
+    <div class="vs-badge">VS</div>
+
+    <!-- Команда 2 -->
+    <div class="preview-team">
+      <div class="pt-name">team_wentyyqxx</div>
+      <div class="pt-players">
+        <div class="pt-row"><span class="pt-nick">wentyyq...</span><span class="pt-pelo" style="color:#e8c240">1370</span></div>
+        <div class="pt-row"><span class="pt-nick">Ramisko</span><span class="pt-pelo" style="color:#e8c240">1209</span></div>
+        <div class="pt-row"><span class="pt-nick">-tron</span><span class="pt-pelo" style="color:#e8c240">1318</span></div>
+        <div class="pt-row"><span class="pt-nick">kowexz</span><span class="pt-pelo" style="color:#6fce6f">1280</span></div>
+        <div class="pt-row"><span class="pt-nick">BoMj_B_K</span><span class="pt-pelo" style="color:#e8c240">1333</span></div>
+      </div>
+    </div>
+
+    <!-- Правая панель ELO -->
+    <div class="preview-badge" style="border-color:rgba(255,101,0,.35);">
+      <div class="pb-label">▶ AVG ELO</div>
+      <div class="pb-avg" style="color:#e8c240">1302</div>
+      <div class="pb-lvl" style="color:#c8a825">LVL 6</div>
+      <div class="pb-divider"></div>
+      <div class="pb-list">
+        <div class="pb-row"><span class="pb-nick">wentyyq</span><span class="pb-pelo" style="color:#e8c240">1370</span></div>
+        <div class="pb-row"><span class="pb-nick">Ramisko</span><span class="pb-pelo" style="color:#e8c240">1209</span></div>
+        <div class="pb-row"><span class="pb-nick">-tron</span><span class="pb-pelo" style="color:#e8c240">1318</span></div>
+        <div class="pb-row"><span class="pb-nick">kowexz</span><span class="pb-pelo" style="color:#6fce6f">1280</span></div>
+        <div class="pb-row"><span class="pb-nick">BoMj_B_K</span><span class="pb-pelo" style="color:#e8c240">1333</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FEATURES ── -->
+<section>
+  <h2 class="section-title">Что умеет <span>расширение</span></h2>
+  <p class="section-sub">Минимально, быстро, по делу</p>
+
+  <div class="features">
+    <div class="feat">
+      <span class="feat-icon">🎯</span>
+      <h3>ELO из матча, не с аккаунта</h3>
+      <p>Показывает тот же ELO, что зафиксирован на момент создания матча — как в лобби FACEIT.</p>
+    </div>
+    <div class="feat">
+      <span class="feat-icon">⚡</span>
+      <h3>Один запрос к API</h3>
+      <p>Не нагружает FACEIT — всё нужное берётся из одного запроса на данные матча.</p>
+    </div>
+    <div class="feat">
+      <span class="feat-icon">📌</span>
+      <h3>Встроен в страницу</h3>
+      <p>Панели появляются слева и справа от списков игроков — не окно поверх, а часть интерфейса.</p>
+    </div>
+    <div class="feat">
+      <span class="feat-icon">🎮</span>
+      <h3>CS2 / CS:GO и другие игры</h3>
+      <p>Работает для любой игры на FACEIT — CS2, CS:GO, Valorant, Dota 2 и т.д.</p>
+    </div>
+    <div class="feat">
+      <span class="feat-icon">🔄</span>
+      <h3>Следит за навигацией</h3>
+      <p>FACEIT — одностраничное приложение. Расширение перезапускается при каждой смене матча.</p>
+    </div>
+    <div class="feat">
+      <span class="feat-icon">🔒</span>
+      <h3>Без сторонних серверов</h3>
+      <p>Данные берутся только с официального API FACEIT. Никаких сторонних серверов и трекинга.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── INSTALL ── -->
+<section class="install-section" id="install">
+  <h2 class="section-title">Установка за <span>2 минуты</span></h2>
+  <p class="section-sub">Работает в Microsoft Edge и Google Chrome</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Скачай архив</h3>
+        <p>Нажми кнопку «Скачать расширение» выше. Сохрани <code>.zip</code> файл куда удобно.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Распакуй архив</h3>
+        <p>Правая кнопка мыши → «Извлечь всё». Запомни папку куда распаковал — она должна остаться там навсегда.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>Открой страницу расширений</h3>
+        <p>
+          В <strong>Edge</strong>: адресная строка → <code>edge://extensions</code><br>
+          В <strong>Chrome</strong>: адресная строка → <code>chrome://extensions</code>
+        </p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h3>Включи режим разработчика</h3>
+        <p>Переключатель «Режим разработчика» / «Developer mode» — в правом верхнем углу страницы расширений.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <h3>Загрузи расширение</h3>
+        <p>Нажми «Загрузить распакованное расширение» / «Load unpacked» → выбери папку <code>faceit-elo-extension</code> которую распаковал на шаге 2.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">6</div>
+      <div class="step-body">
+        <h3>Готово 🎉</h3>
+        <p>Открой любую комнату матча на <code>faceit.com</code> — AVG ELO появится автоматически по бокам от списков игроков.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <p>FACEIT ELO Extension &nbsp;·&nbsp; Не аффилировано с FACEIT Ltd.</p>
+</footer>
+
+</body>
+</html>
